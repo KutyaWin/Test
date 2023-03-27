@@ -12,40 +12,134 @@ public class JavaSchoolStarter {
 
     private final List<Map<String, Object>> data;
 
+
     public JavaSchoolStarter(){
         data = new ArrayList<>();
+
     }
 
-    public List<Map<String,Object>> execute(String request) {
-        List<Map<String, Object>> result = new ArrayList<>();
+    public List<Map<String, Object>> execute(String request) {
         String[] strings = request.split("\\s+");
         String operation = strings[0].toUpperCase();
         switch (operation) {
             case "INSERT":
-                result.addAll(insert(strings));
+                data.addAll(insert(strings));
                 break;
             case "UPDATE":
-                result.addAll(update(strings));
+                data.addAll(update(strings));
                 break;
             case "SELECT":
-                result.addAll(select(strings));
+                data.addAll(select(strings));
                 break;
             case "DELETE":
-                result.addAll(delete(strings));
+                data.addAll(delete(strings));
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported operation: " + operation);
         }
-        return result;
+        return data;
     }
 
 
 
+    private List<Map<String, Object>> insert(String... strings){
+        List<Map<String, Object>> result = new ArrayList<>();
+        Map<String, Object> item = new HashMap<>();
+        for (int i = 2; i < strings.length; i++) {
+            String[] keyValue = strings[i].split("=");
+            String key = keyValue[0].replaceAll("'", "");
+            String value;
+            boolean isEndExpression = i == strings.length - 1;
+            value = initValue(keyValue[1], isEndExpression);
+            switch (key) {
+                case "id":
+                    item.put(key, Long.parseLong(value));
+                    break;
+                case "lastName":
+                    item.put(key, value);
+                    break;
+                case "age":
+                    item.put(key, Integer.parseInt(value));
+                    break;
+                case "cost":
+                    item.put(key, Double.parseDouble(value));
+                    break;
+                case "active":
+                    item.put(key, Boolean.parseBoolean(value));
+                    break;
+                default:
+                    throw new IllegalArgumentException("нет такой ячейки " + key);
+            }
+        }
+        result.add(item);
+        return result;
+    }
+
+    private String initValue(String keyValue, boolean isEndExpression) {
+        String value;
+        if (isEndExpression) {
+            value = replaceInEnd(keyValue);
+        } else {
+            value = replace(keyValue);
+        }
+        return value;
+    }
+
+    private String replace(String keyValue){
+        String value;
+        if (keyValue.contains("'")) {
+            value = keyValue.replaceAll("'", "").replaceAll(",","");
+        } else {
+            value = keyValue.replaceAll(",", "");
+        }
+        return value;
+    }
+    private String replaceInEnd(String keyValue){
+        String value;
+        if (keyValue.contains("'")) {
+            value = keyValue.replaceAll("'", "");
+        } else {
+            value = keyValue;
+        }
+        return value;
+    }
 
 
     private List<Map<String, Object>> update(String... strings){
             List<Map<String, Object>> result = new ArrayList<>();
-            String[] updateParts = strings[2].split(",");
+            for(int i = 2; i< strings.length; i++){
+                String[] keyValue;
+                for(Map<String,Object> map: data ) {
+                    if (strings[i].equalsIgnoreCase("WHERE")) {
+                        String[] operators = {"=", "!=", "like", "ilike", ">=", "<=", "<", ">"};
+                        for (String operator : operators) {
+                            if (strings[i + 1].contains(operator))
+                                switch (operator) {
+                                    case "=": {
+                                        keyValue = strings[i + 1].split(operator);
+                                        if (map.containsKey(keyValue[0]))
+                                            map.put(keyValue[0], keyValue[1]);
+                                    }
+                                    case "!=": {
+
+                                    }
+                                    case "like":
+                                    case "ilike":
+                                    case ">=":
+                                    case "<=":
+                                    case "<":
+                                    case ">":
+                                }
+                        }
+
+
+                    } else {
+                        keyValue = strings[i].split("=");
+
+                    }
+                }
+            }
+
             String[] whereParts = strings[4].split("=");
             String whereKey = whereParts[0].replaceAll("'", "");
             String whereValue = whereParts[1].replaceAll("'", "");
@@ -76,31 +170,7 @@ public class JavaSchoolStarter {
         }
 
 
-    private List<Map<String, Object>> insert(String... strings){
-        List<Map<String, Object>> result = new ArrayList<>();
-        Map<String, Object> item = new HashMap<>();
-        for (int i = 2; i < strings.length; i++) {
-            String[] keyValue = strings[i].split("=");
-            String key = keyValue[0].replaceAll("'", "");
-            String value = keyValue[1].replaceAll("'", "");
-            if (key.equals("id")) {
-                item.put(key, Long.parseLong(value));
-            } else if (key.equals("lastName")) {
-                item.put(key, value);
-            } else if (key.equals("age")) {
-                item.put(key, Integer.parseInt(value));
-            } else if (key.equals("cost")) {
-                item.put(key, Double.parseDouble(value));
-            } else if (key.equals("active")) {
-                item.put(key, Boolean.parseBoolean(value));
-            } else {
-                throw new IllegalArgumentException("Unsupported field: " + key);
-            }
-        }
-        data.add(item);
-        result.add(item);
-        return result;
-    }
+
 
     private List<Map<String, Object>> select(String... strings){
         List<Map<String, Object>> result = new ArrayList<>();
@@ -167,5 +237,12 @@ public class JavaSchoolStarter {
             }
         }
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "JavaSchoolStarter{" +
+                "data=" + data +
+                '}';
     }
 }
